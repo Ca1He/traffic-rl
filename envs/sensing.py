@@ -29,6 +29,8 @@ class NoisyObservation(ObservationFunction):
     noise_std: float = 0.0
     dropout_p: float = 0.0
     dropout_mode: str = "step"
+    dropout_p_max: float = 0.0   # >0: draw dropout_p ~ U[0, max] every episode (domain randomization)
+    noise_std_max: float = 0.0   # >0: draw noise_std ~ U[0, max] every episode
     rng: np.random.Generator = np.random.default_rng(0)
 
     def __init__(self, ts):
@@ -39,6 +41,12 @@ class NoisyObservation(ObservationFunction):
         self._episode_mask_out: Optional[np.ndarray] = None
         self.out_lanes = None
         self.last = {}  # last sensed (possibly corrupted) readings, read by Max-Pressure
+        # sumo-rl builds a new observation function at every reset -> one draw per episode.
+        # Instance attributes shadow the class-level settings.
+        if self.dropout_p_max > 0:
+            self.dropout_p = float(self.rng.uniform(0.0, self.dropout_p_max))
+        if self.noise_std_max > 0:
+            self.noise_std = float(self.rng.uniform(0.0, self.noise_std_max))
 
     # ------------------------------------------------------------------
     def _out_density(self) -> np.ndarray:
@@ -106,7 +114,8 @@ class NoisyObservation(ObservationFunction):
 
 
 def make_observation_class(noise_std: float = 0.0, dropout_p: float = 0.0,
-                           dropout_mode: str = "step", seed: int = 0) -> type:
+                           dropout_mode: str = "step", seed: int = 0,
+                           dropout_p_max: float = 0.0, noise_std_max: float = 0.0) -> type:
     """Create a NoisyObservation subclass with the given sensor configuration."""
     if dropout_mode not in ("step", "episode"):
         raise ValueError("dropout_mode must be 'step' or 'episode'")
@@ -117,6 +126,8 @@ def make_observation_class(noise_std: float = 0.0, dropout_p: float = 0.0,
             "noise_std": float(noise_std),
             "dropout_p": float(dropout_p),
             "dropout_mode": dropout_mode,
+            "dropout_p_max": float(dropout_p_max or 0.0),
+            "noise_std_max": float(noise_std_max or 0.0),
             "rng": np.random.default_rng(seed),
         },
     )

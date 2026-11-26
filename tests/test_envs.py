@@ -95,3 +95,14 @@ def test_same_seed_is_reproducible(cfg):
     m1 = run_episode(make_env(cfg, seed=3), pol, seed=3)
     m2 = run_episode(make_env(cfg, seed=3), pol, seed=3)
     assert m1["mean_delay"] == m2["mean_delay"] and m1["n_vehicles"] == m2["n_vehicles"]
+
+
+def test_dropout_randomization_draws_per_episode():
+    from envs.sensing import make_observation_class
+    cls = make_observation_class(dropout_p_max=0.3, seed=0)
+
+    class FakeTS:  # the constructor only stores ts
+        pass
+    ps = [cls(FakeTS()).dropout_p for _ in range(50)]
+    assert all(0.0 <= p <= 0.3 for p in ps) and len(set(ps)) > 1
+    assert cls.dropout_p == 0.0  # class default untouched

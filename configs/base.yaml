@@ -29,10 +29,12 @@ sensing:
   noise_std: 0.0          # Gaussian noise on normalized detector readings
   dropout_p: 0.0          # probability a lane detector reads 0
   dropout_mode: step      # step (transient) | episode (persistent failure)
+  dropout_p_max: 0.0      # domain randomization: dropout_p ~ U[0, max] per episode
+  noise_std_max: 0.0      # domain randomization: noise_std ~ U[0, max] per episode
 
 demand_randomization: false
 random_pool:
   n: 50
-  low: 150
-  high: 900
+  low: 100
+  high: 850
   seed: 12345

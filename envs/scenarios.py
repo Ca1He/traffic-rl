@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Sequence
+from typing import Dict, List, Sequence
 
 import numpy as np
 
@@ -82,9 +82,16 @@ def write_routes(periods: Sequence[Period], path: str) -> str:
                 )
     lines += [f for _, f in sorted(flows, key=lambda x: x[0])]  # SUMO requires flows sorted by begin
     lines.append("</routes>")
+    content = "\n".join(lines) + "\n"
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as fh:
-        fh.write("\n".join(lines) + "\n")
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as fh:
+            if fh.read() == content:
+                return path  # identical file already there (parallel jobs share route files)
+    tmp = f"{path}.{os.getpid()}.tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        fh.write(content)
+    os.replace(tmp, path)  # atomic: readers never see a half-written file
     return path
 
 

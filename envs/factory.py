@@ -48,7 +48,9 @@ def make_env(cfg: Dict[str, Any], seed: int = 0, tripinfo_path: Optional[str] = 
     e, s, c = cfg["env"], cfg["sensing"], cfg["cost"]
     if tripinfo_path is None:
         tripinfo_path = os.path.join(tempfile.mkdtemp(prefix="tsc_"), "tripinfo.xml")
-    obs_cls = make_observation_class(s["noise_std"], s["dropout_p"], s["dropout_mode"], seed=seed + 10_000)
+    obs_cls = make_observation_class(s["noise_std"], s["dropout_p"], s["dropout_mode"], seed=seed + 10_000,
+                                     dropout_p_max=s.get("dropout_p_max", 0.0),
+                                     noise_std_max=s.get("noise_std_max", 0.0))
 
     env = sumo_rl.SumoEnvironment(
         net_file=NET_FILE,

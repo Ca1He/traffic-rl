@@ -78,7 +78,20 @@ def batch_step6():
     return jobs
 
 
-BATCHES = {"step5": batch_step5, "step6": batch_step6}
+def batch_step7():
+    """Domain randomization: train on random demand (pool of 50) + random detector dropout U[0, 0.3]."""
+    jobs = []
+    dr = ["sensing.dropout_p_max=0.3"]
+    for s in SEEDS5:
+        jobs.append(job("ppo", "random", s, "dr-ppo", sets=dr))
+        jobs.append(job("ppo", "random", s, "dr-lag", sets=dr + ["lagrangian.enabled=true"]))
+    # Ablation: demand randomization only (no sensor randomization).
+    for s in SEEDS3:
+        jobs.append(job("ppo", "random", s, "dr-lag-demandonly", sets=["lagrangian.enabled=true"]))
+    return jobs
+
+
+BATCHES = {"step5": batch_step5, "step6": batch_step6, "step7": batch_step7}
 
 
 def run(name, tag, cmd):

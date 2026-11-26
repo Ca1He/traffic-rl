@@ -48,7 +48,37 @@ def batch_step5():
     return jobs
 
 
-BATCHES = {"step5": batch_step5}
+def batch_step6():
+    """Fairness constraint experiments (all PPO, trained on asym, evaluated on asym + surge)."""
+    jobs, ev = [], ["surge"]
+    lag = ["lagrangian.enabled=true"]
+    # Main method: Lagrangian PPO, T = 90 s, d = 0.05.
+    for s in SEEDS5:
+        jobs.append(job("ppo", "asym", s, "lag-T90", sets=lag, eval_scenarios=ev))
+    for s in SEEDS3:
+        jobs.append(job("ppo", "balanced", s, "lag-T90", sets=lag))
+    # Threshold sweep -> Pareto curve (mean delay vs max delay).
+    for T in (60, 120):
+        for s in SEEDS3:
+            jobs.append(job("ppo", "asym", s, f"lag-T{T}", sets=lag + [f"cost.threshold={T}"], eval_scenarios=ev))
+    # Fixed-lambda ablation (lambda*/10, lambda*, 10 lambda*; lambda* ~ 0.25 from the pilot).
+    for lam in (0.025, 0.25, 2.5):
+        for s in SEEDS3:
+            jobs.append(job("ppo", "asym", s, f"fixedlam-{lam}", sets=[f"lagrangian.fixed={lam}"], eval_scenarios=ev))
+    # Structural constraint (MAPPO-LCE style): no phase red for more than R seconds.
+    for R in (60, 90):
+        for s in SEEDS3:
+            jobs.append(job("ppo", "asym", s, f"struct-R{R}", sets=lag + [f"cost.structural_max_red={R}"],
+                            eval_scenarios=ev))
+    # Reward-shaping fairness (Raeis-style) with stronger penalties (alpha = 1 is in step 5).
+    for a in (5, 20):
+        for s in SEEDS3:
+            jobs.append(job("ppo", "asym", s, f"fairshaped-a{a}",
+                            sets=["env.reward=fair-shaped", f"env.fair_alpha={a}"], eval_scenarios=ev))
+    return jobs
+
+
+BATCHES = {"step5": batch_step5, "step6": batch_step6}
 
 
 def run(name, tag, cmd):

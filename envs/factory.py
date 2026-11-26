@@ -16,6 +16,7 @@ from .metrics import episode_metrics, read_tripinfo  # noqa: E402
 from .rewards import resolve_reward  # noqa: E402
 from .scenarios import NET_FILE, random_route_pool, route_file  # noqa: E402
 from .sensing import make_observation_class  # noqa: E402
+from .structural import MaxRedCostWrapper  # noqa: E402
 from .wrappers import DemandRandomizer, FairnessCostWrapper, MaxGreenWrapper  # noqa: E402
 
 CONFIG_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "configs")
@@ -69,6 +70,8 @@ def make_env(cfg: Dict[str, Any], seed: int = 0, tripinfo_path: Optional[str] = 
     env.tripinfo_path = tripinfo_path
     env = MaxGreenWrapper(env, e["max_green"])
     env = FairnessCostWrapper(env, threshold=c["threshold"], kind=c["kind"])
+    if c.get("structural_max_red"):  # structural constraint replaces the training cost (MAPPO-LCE style)
+        env = MaxRedCostWrapper(env, max_red=c["structural_max_red"])
     if e["scenario"] == "random" or cfg.get("demand_randomization", False):
         env = DemandRandomizer(env, random_route_pool(**cfg.get("random_pool", {})), seed=seed)
     return env
@@ -84,12 +87,12 @@ def run_episode(env, policy: Callable[[np.ndarray, Any], int], seed: int) -> Dic
     while not done:
         obs, r, term, trunc, info = env.step(policy(obs, env))
         ret += r
-        costs.append(info["cost"])
+        costs.append(info.get("outcome_cost", info["cost"]))  # always report the max-wait cost
         steps += 1
         done = term or trunc
     env.close()
     base = env.unwrapped
     m = episode_metrics(read_tripinfo(base.tripinfo_path), horizon=base.sim_max_time - base.begin_time)
-    m.update({"return": ret, "mean_cost": float(np.mean(costs)), "steps": steps,
+    m.update({"return": ret, "mean_cost": float(np.mean(costs)), "steps": steps,  # mean_cost = violation rate
               "forced_switches": info.get("forced_switches", 0)})
     return m

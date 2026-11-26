@@ -15,6 +15,15 @@ env:
 cost:
   kind: indicator         # indicator: 1[max wait > T];  hinge: max(0, max wait - T) / T
   threshold: 90           # T (s)
+  structural_max_red: null  # if set (s): train on the structural cost 1[some phase red > R] instead
+
+lagrangian:               # PPO-Lagrangian (agents/lagrangian.py); PPO only
+  enabled: false
+  target: 0.05            # d: allowed violation rate (mean per-step cost)
+  lr: 0.01                # dual step size eta (0.05 overshoots: lambda ~1.1, over-constrained)
+  lam_init: 0.0
+  lam_max: 20.0
+  fixed: null             # constant lambda instead of the dual update (reward-shaping ablation)
 
 sensing:
   noise_std: 0.0          # Gaussian noise on normalized detector readings

@@ -29,6 +29,7 @@ import yaml  # noqa: E402
 from stable_baselines3 import DQN, PPO  # noqa: E402
 from stable_baselines3.common.callbacks import BaseCallback  # noqa: E402
 
+from agents.lagrangian import LagrangeCallback, LagrangeState, PenalizedRewardWrapper  # noqa: E402
 from envs import load_config, make_env, run_episode  # noqa: E402
 from envs.metrics import episode_metrics, read_tripinfo  # noqa: E402
 
@@ -55,10 +56,11 @@ class EpisodeLogger(BaseCallback):
 
     def _on_step(self) -> bool:
         info = self.locals["infos"][0]
-        self.ret += float(self.locals["rewards"][0])
-        self.costs.append(info.get("cost", 0.0))
+        self.ret += float(info.get("raw_reward", self.locals["rewards"][0]))  # un-penalized reward
+        self.costs.append(info.get("outcome_cost", info.get("cost", 0.0)))   # max-wait violation
         if self.locals["dones"][0]:
-            row = {"timesteps": self.num_timesteps, "return": self.ret, "mean_cost": float(np.mean(self.costs))}
+            row = {"timesteps": self.num_timesteps, "return": self.ret, "mean_cost": float(np.mean(self.costs)),
+                   "lambda": info.get("lambda", np.nan)}
             self.rows.append(row)
             self.ret, self.costs = 0.0, []
             if len(self.rows) % 10 == 0:
@@ -121,11 +123,23 @@ def main():
         yaml.safe_dump({"args": vars(args), "cfg": cfg, "hyperparams": HYPERPARAMS[args.algo]}, fh)
 
     env = make_env(cfg, seed=args.seed)
+    callbacks = [EpisodeLogger(os.path.join(run_dir, "progress.csv"))]
+    lag = cfg.get("lagrangian", {})
+    state = None
+    if lag.get("enabled") or lag.get("fixed") is not None:
+        if args.algo != "ppo":
+            raise ValueError("Lagrangian training is implemented for PPO only")
+        state = LagrangeState(lam=lag["lam_init"], target=lag["target"], lr=lag["lr"],
+                              lam_max=lag["lam_max"], fixed=lag.get("fixed"))
+        env = PenalizedRewardWrapper(env, state)
+        callbacks.append(LagrangeCallback(state))
     Algo = PPO if args.algo == "ppo" else DQN
     model = Algo("MlpPolicy", env, seed=args.seed, device=args.device, verbose=0, **HYPERPARAMS[args.algo])
 
     t0 = time.time()
-    model.learn(total_timesteps=args.steps, callback=EpisodeLogger(os.path.join(run_dir, "progress.csv")))
+    model.learn(total_timesteps=args.steps, callback=callbacks)
+    if state is not None:
+        pd.DataFrame(state.history).to_csv(os.path.join(run_dir, "lambda.csv"), index=False)
     train_s = time.time() - t0
     model.save(os.path.join(run_dir, "model"))
     env.close()

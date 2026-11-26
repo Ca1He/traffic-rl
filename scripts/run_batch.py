@@ -91,7 +91,19 @@ def batch_step7():
     return jobs
 
 
-BATCHES = {"step5": batch_step5, "step6": batch_step6, "step7": batch_step7}
+def batch_step8():
+    """2x2 grid: parameter-shared IPPO, unconstrained vs Lagrangian (trained on asym)."""
+    jobs = []
+    for s in SEEDS3:
+        for tag, sets in (("grid-ippo", []), ("grid-lag", ["lagrangian.enabled=true"])):
+            cmd = [sys.executable, "train_grid.py", "--seed", str(s), "--tag", tag]
+            if sets:
+                cmd += ["--set", *sets]
+            jobs.append((f"ippo_asym_s{s}", tag, cmd))
+    return jobs
+
+
+BATCHES = {"step5": batch_step5, "step6": batch_step6, "step7": batch_step7, "step8": batch_step8}
 
 
 def run(name, tag, cmd):

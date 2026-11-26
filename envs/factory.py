@@ -13,6 +13,7 @@ os.environ.setdefault("LIBSUMO_AS_TRACI", "1")  # libsumo is ~10x faster than Tr
 import sumo_rl  # noqa: E402
 
 from .metrics import episode_metrics, read_tripinfo  # noqa: E402
+from .rewards import resolve_reward  # noqa: E402
 from .scenarios import NET_FILE, random_route_pool, route_file  # noqa: E402
 from .sensing import make_observation_class  # noqa: E402
 from .wrappers import DemandRandomizer, FairnessCostWrapper, MaxGreenWrapper  # noqa: E402
@@ -56,7 +57,7 @@ def make_env(cfg: Dict[str, Any], seed: int = 0, tripinfo_path: Optional[str] = 
         yellow_time=e["yellow_time"],
         min_green=e["min_green"],
         max_green=e["max_green"],
-        reward_fn=e["reward"],
+        reward_fn=resolve_reward(e),
         observation_class=obs_cls,
         single_agent=True,
         use_gui=e.get("gui", False),

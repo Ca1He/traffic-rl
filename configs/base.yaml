@@ -7,7 +7,9 @@ env:
   yellow_time: 3
   min_green: 10
   max_green: 60           # enforced by MaxGreenWrapper (sumo-rl ignores it)
-  reward: diff-waiting-time   # diff-waiting-time | queue | pressure
+  reward: diff-waiting-time   # diff-waiting-time | queue | pressure | fair-shaped
+  fair_alpha: 1.0         # fair-shaped only: weight of the long-wait penalty
+  fair_tau: 60            # fair-shaped only: time scale (s)
   gui: false
 
 cost:

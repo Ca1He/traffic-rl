@@ -115,7 +115,19 @@ def batch_step8():
     return jobs
 
 
-BATCHES = {"step5": batch_step5, "step6": batch_step6, "step7": batch_step7, "step7long": batch_step7long, "step8": batch_step8}
+def batch_step8long():
+    """Grid with 1.5M steps (375k per intersection): at 600k the multiplier was still rising."""
+    jobs = []
+    for s in SEEDS3:
+        for tag, sets in (("grid1500-ippo", []), ("grid1500-lag", ["lagrangian.enabled=true"])):
+            cmd = [sys.executable, "train_grid.py", "--seed", str(s), "--tag", tag, "--steps", "1500000"]
+            if sets:
+                cmd += ["--set", *sets]
+            jobs.append((f"ippo_asym_s{s}", tag, cmd))
+    return jobs
+
+
+BATCHES = {"step8long": batch_step8long, "step5": batch_step5, "step6": batch_step6, "step7": batch_step7, "step7long": batch_step7long, "step8": batch_step8}
 
 
 def run(name, tag, cmd):

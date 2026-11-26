@@ -12,16 +12,16 @@
     <route id="r_W_through" edges="w_t t_e"/>
     <route id="r_W_left" edges="w_t t_n"/>
     <route id="r_W_right" edges="w_t t_s"/>
-    <flow id="f0_N_through" type="car" route="r_N_through" begin="0" end="3600" probability="0.028654" departSpeed="max" departLane="best"/>
-    <flow id="f0_N_left" type="car" route="r_N_left" begin="0" end="3600" probability="0.009551" departSpeed="max" departLane="best"/>
-    <flow id="f0_N_right" type="car" route="r_N_right" begin="0" end="3600" probability="0.009551" departSpeed="max" departLane="best"/>
-    <flow id="f0_S_through" type="car" route="r_S_through" begin="0" end="3600" probability="0.071897" departSpeed="max" departLane="best"/>
-    <flow id="f0_S_left" type="car" route="r_S_left" begin="0" end="3600" probability="0.023966" departSpeed="max" departLane="best"/>
-    <flow id="f0_S_right" type="car" route="r_S_right" begin="0" end="3600" probability="0.023966" departSpeed="max" departLane="best"/>
-    <flow id="f0_E_through" type="car" route="r_E_through" begin="0" end="3600" probability="0.127477" departSpeed="max" departLane="best"/>
-    <flow id="f0_E_left" type="car" route="r_E_left" begin="0" end="3600" probability="0.042492" departSpeed="max" departLane="best"/>
-    <flow id="f0_E_right" type="car" route="r_E_right" begin="0" end="3600" probability="0.042492" departSpeed="max" departLane="best"/>
-    <flow id="f0_W_through" type="car" route="r_W_through" begin="0" end="3600" probability="0.103848" departSpeed="max" departLane="best"/>
-    <flow id="f0_W_left" type="car" route="r_W_left" begin="0" end="3600" probability="0.034616" departSpeed="max" departLane="best"/>
-    <flow id="f0_W_right" type="car" route="r_W_right" begin="0" end="3600" probability="0.034616" departSpeed="max" departLane="best"/>
+    <flow id="f0_N_through" type="car" route="r_N_through" begin="0" end="3600" probability="0.036987" departSpeed="max" departLane="best"/>
+    <flow id="f0_N_left" type="car" route="r_N_left" begin="0" end="3600" probability="0.012329" departSpeed="max" departLane="best"/>
+    <flow id="f0_N_right" type="car" route="r_N_right" begin="0" end="3600" probability="0.012329" departSpeed="max" departLane="best"/>
+    <flow id="f0_S_through" type="car" route="r_S_through" begin="0" end="3600" probability="0.080230" departSpeed="max" departLane="best"/>
+    <flow id="f0_S_left" type="car" route="r_S_left" begin="0" end="3600" probability="0.026743" departSpeed="max" departLane="best"/>
+    <flow id="f0_S_right" type="car" route="r_S_right" begin="0" end="3600" probability="0.026743" departSpeed="max" departLane="best"/>
+    <flow id="f0_E_through" type="car" route="r_E_through" begin="0" end="3600" probability="0.135810" departSpeed="max" departLane="best"/>
+    <flow id="f0_E_left" type="car" route="r_E_left" begin="0" end="3600" probability="0.045270" departSpeed="max" departLane="best"/>
+    <flow id="f0_E_right" type="car" route="r_E_right" begin="0" end="3600" probability="0.045270" departSpeed="max" departLane="best"/>
+    <flow id="f0_W_through" type="car" route="r_W_through" begin="0" end="3600" probability="0.112182" departSpeed="max" departLane="best"/>
+    <flow id="f0_W_left" type="car" route="r_W_left" begin="0" end="3600" probability="0.037394" departSpeed="max" departLane="best"/>
+    <flow id="f0_W_right" type="car" route="r_W_right" begin="0" end="3600" probability="0.037394" departSpeed="max" departLane="best"/>
 </routes>

@@ -91,6 +91,18 @@ def batch_step7():
     return jobs
 
 
+def batch_step7long():
+    """Same as step7 with 800k steps: at 300k the multiplier had not converged under randomization."""
+    jobs = []
+    dr = ["sensing.dropout_p_max=0.3"]
+    for s in SEEDS5:
+        jobs.append(job("ppo", "random", s, "dr800-ppo", steps=800_000, sets=dr))
+        jobs.append(job("ppo", "random", s, "dr800-lag", steps=800_000, sets=dr + ["lagrangian.enabled=true"]))
+    for s in SEEDS3:
+        jobs.append(job("ppo", "random", s, "dr800-lag-demandonly", steps=800_000, sets=["lagrangian.enabled=true"]))
+    return jobs
+
+
 def batch_step8():
     """2x2 grid: parameter-shared IPPO, unconstrained vs Lagrangian (trained on asym)."""
     jobs = []
@@ -103,7 +115,7 @@ def batch_step8():
     return jobs
 
 
-BATCHES = {"step5": batch_step5, "step6": batch_step6, "step7": batch_step7, "step8": batch_step8}
+BATCHES = {"step5": batch_step5, "step6": batch_step6, "step7": batch_step7, "step7long": batch_step7long, "step8": batch_step8}
 
 
 def run(name, tag, cmd):
@@ -126,6 +138,11 @@ def main():
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
     jobs = BATCHES[args.batch]()
+    sys.path.insert(0, ROOT)
+    from envs.scenarios import SCENARIOS, random_route_pool, route_file  # pre-generate shared route files
+    for name in SCENARIOS:
+        route_file(name)
+    random_route_pool()
     print(f"{len(jobs)} jobs, {args.workers} workers", flush=True)
     if args.dry_run:
         for _, _, cmd in jobs:

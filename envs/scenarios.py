@@ -9,6 +9,7 @@ into through / left / right movements with fixed turning ratios.
 from __future__ import annotations
 
 import os
+import time
 from dataclasses import dataclass
 from typing import Dict, List, Sequence
 
@@ -91,8 +92,17 @@ def write_routes(periods: Sequence[Period], path: str) -> str:
     tmp = f"{path}.{os.getpid()}.tmp"
     with open(tmp, "w", encoding="utf-8") as fh:
         fh.write(content)
-    os.replace(tmp, path)  # atomic: readers never see a half-written file
-    return path
+    for attempt in range(20):
+        try:
+            os.replace(tmp, path)  # atomic: readers never see a half-written file
+            return path
+        except PermissionError:  # Windows: another process has the file open -> wait and retry
+            time.sleep(0.2 * (attempt + 1))
+            with open(path, encoding="utf-8") as fh:
+                if fh.read() == content:  # someone else already wrote the same content
+                    os.remove(tmp)
+                    return path
+    raise PermissionError(f"could not replace {path}")
 
 
 def route_file(scenario: str) -> str:

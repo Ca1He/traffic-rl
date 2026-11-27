@@ -28,11 +28,27 @@ report/    references.bib
 ```
 
 ## Reproduce
+All numbers in the report come from the commands below (a laptop CPU, ~6 h in total).
+Training batches skip runs whose `eval.csv` already exists, so they can be resumed.
+
 | Result | Command | Output |
 |---|---|---|
-| Saturation flows used by Webster | `python scripts/measure_saturation.py` | through 1630, left 1120 veh/h/lane |
-| Baseline table (3 scenarios x 5 seeds) | `python scripts/eval_baselines.py` | `results/baselines.csv` |
+| Tests | `python -m pytest -q tests` | 16 tests |
+| Saturation flows (Webster) | `python scripts/measure_saturation.py` | 1630 / 1120 veh/h/lane |
+| Baselines (Tab. 1) | `python scripts/eval_baselines.py` | `results/baselines.csv` |
+| DQN / PPO, reward ablation | `python scripts/run_batch.py step5` | `runs/main`, `runs/reward-*` |
+| Constraint experiments | `python scripts/run_batch.py step6` | `runs/lag-*`, `fixedlam-*`, `struct-*`, `fairshaped-*` |
+| Domain randomization (feasible) | `python scripts/run_batch.py step7feas` | `runs/drfeas-*` |
+| DR without feasibility filter (negative result) | `python scripts/run_batch.py step7long` | `runs/dr800-*` |
+| Robustness (Fig. 4) | `python scripts/eval_robustness.py --tags main lag-T90 drfeas-ppo drfeas-lag drfeas-lag-demandonly` | `results/robustness.csv` |
+| 2x2 grid (Tab. 3) | `python train_grid.py --baselines`; `python scripts/run_batch.py step8long` (IPPO); `python scripts/run_batch.py step8local` (Lagrangian) | `results/grid_baselines.csv`, `runs/grid1500-ippo`, `runs/gridlocal-lag` |
+| Proposition 1 sweep (Fig. 5) | `python scripts/proposition_sweep.py` | `results/proposition_sweep.csv` |
+| All tables + t-tests | `python scripts/aggregate.py && python scripts/stats.py` | `results/tables/*.tex`, `results/welch_tests.csv` |
+| All figures | `python scripts/make_figures.py` | `figures/*.pdf` |
+| Overleaf upload bundle | `python scripts/bundle_report.py` | `report_bundle.zip` |
 
-Evaluation seeds start at 1000 and never overlap with training seeds.
-Note: decisions are taken every `delta_time` = 5 s, so fixed-time greens are effectively
-rounded up to the decision grid (e.g. 30 s and 31.5 s greens behave identically).
+Evaluation seeds start at 1000 and never overlap with training seeds (0-4).
+Decisions are taken every `delta_time` = 5 s, so fixed-time greens are effectively rounded up
+to the decision grid (e.g. 30 s and 31.5 s greens behave identically).
+Note on the grid: `runs/grid1500-lag` used the trip-level waiting time as cost (did not converge,
+kept as a negative result); `runs/gridlocal-lag` uses the per-intersection local wait.

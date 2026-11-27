@@ -12,9 +12,16 @@
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{algorithm}
 \usepackage{algorithmic}
-\newcommand{\theHalgorithm}{\arabic{algorithm}}
+\providecommand{\theHalgorithm}{\arabic{algorithm}}
 % ICML 2026 style files are in report/style/ (official, from media.icml.cc).
-\usepackage[accepted]{icml2026}
+% [preprint] shows the author without the "Proceedings of ICML" footer that [accepted] prints.
+\usepackage[preprint]{icml2026}
+\makeatletter
+\renewcommand{\ICML@preprint}{\textit{ELEN E6885 Reinforcement Learning, Final Project.
+Columbia University, Fall 2026.}}
+\makeatother
+\hypersetup{pdftitle={Do Fairness Constraints Survive Distribution Shift?},
+            pdfauthor={He Cai}, pdfsubject={ELEN E6885 Final Project}}
 \newtheorem{proposition}{Proposition}
 
 \icmltitlerunning{Do Fairness Constraints Survive Distribution Shift?}
@@ -220,9 +227,18 @@ Max-Pressure has the lowest mean delay but a long tail; Lagrangian PPO cuts the 
 (baselines). Violation rate: share of decision steps with a vehicle waiting $>90$\,s (target 0.05).
 All RL policies were trained on asym only; surge is unseen. Best value per column in bold.}
 \label{tab:main}
-\small
-\input{tables/main_table.tex}
+\resizebox{\textwidth}{!}{\input{tables/main_table.tex}}
 \end{table*}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig4_robustness.pdf}
+\caption{Violation rate under detector dropout on the training demand (left) and on the unseen
+surge demand (right); mean $\pm$ std over training seeds, 3 episodes each. Dashed: target $d=0.05$.
+Only Webster (tuned to asym, sensor-free) meets the target in training and it fails worst under shift;
+domain randomization (DR) gives the lowest violation rate under shift at every dropout level.}
+\label{fig:robust}
+\end{figure*}
 
 \textbf{Average-optimal control is unfair.} (Tab.~\ref{tab:main}) On asym, Max-Pressure has the
 lowest mean delay (15.5\,s) but the worst max delay among adaptive methods (378\,s) and a
@@ -282,16 +298,6 @@ This exposes a structural limit: the Lagrangian enforces the violation rate \emp
 expectation over the training distribution}, so light scenarios end up far below $d$ and
 heavy ones above it. Neither training regime yields a per-scenario guarantee; that requires
 a worst-case or distributionally robust constraint.
-
-\begin{figure*}[t]
-\centering
-\includegraphics[width=\textwidth]{figures/fig4_robustness.pdf}
-\caption{Violation rate under detector dropout on the training demand (left) and on the unseen
-surge demand (right); mean $\pm$ std over training seeds, 3 episodes each. Dashed: target $d=0.05$.
-Only Webster (tuned to asym, sensor-free) meets the target in training and it fails worst under shift;
-domain randomization (DR) gives the lowest violation rate under shift at every dropout level.}
-\label{fig:robust}
-\end{figure*}
 
 %-------------------------------------------------------------------------------
 \subsection{2$\times$2 grid}\label{sec:grid}
@@ -372,9 +378,16 @@ Lagrangian: $d=0.05$, $\eta=0.01$, $\lambda_{\max}=20$. Grid PPO: batch 720.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.48\textwidth]{figures/fig5_proposition.pdf}
-\includegraphics[width=0.48\textwidth]{figures/fig2_training.pdf}
-\caption{Left: Proposition~\ref{prop:starve} in SUMO. Right: training curves (5 seeds).}
-\label{fig:prop}\label{fig:training}
+\includegraphics[width=0.5\textwidth]{figures/fig5_proposition.pdf}
+\caption{Proposition~\ref{prop:starve} in SUMO: maximum side-road delay vs.\ side-road demand
+(main road fixed at 800\,veh/h, 5 episodes per point). Dashed: slope $-1/2$ predicted by the fluid model.}
+\label{fig:prop}
+\end{figure}
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.9\textwidth]{figures/fig2_training.pdf}
+\caption{Training on asym (mean $\pm$ std over 5 seeds). Left: violation rate of PPO and Lagrangian PPO.
+Right: Lagrange multiplier $\lambda$.}
+\label{fig:training}
 \end{figure}
 \end{document}

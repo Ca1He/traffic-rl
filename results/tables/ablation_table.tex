@@ -1,0 +1,20 @@
+\begin{tabular}{llccc}
+\toprule
+ & Variant & Mean delay (s) & Max delay (s) & Viol. rate \\
+\midrule
+Reward & waiting-time decrease (default) & 16.5\tiny{$\pm$0.6} & 194\tiny{$\pm$20} & 0.113\tiny{$\pm$0.017} \\
+ & $-$queue length & 31.6\tiny{$\pm$14.1} & 1013\tiny{$\pm$336} & 0.927\tiny{$\pm$0.030} \\
+ & $-$pressure & 74.4\tiny{$\pm$30.0} & 2393\tiny{$\pm$1039} & 0.967\tiny{$\pm$0.003} \\
+\midrule
+Shaping & fair-shaped, $\alpha{=}1$ & 15.3\tiny{$\pm$0.3} & 242\tiny{$\pm$18} & 0.165\tiny{$\pm$0.022} \\
+ & fair-shaped, $\alpha{=}5$ & 15.9\tiny{$\pm$0.3} & 202\tiny{$\pm$10} & 0.144\tiny{$\pm$0.009} \\
+ & fair-shaped, $\alpha{=}20$ & 22.0\tiny{$\pm$3.8} & 711\tiny{$\pm$209} & 0.791\tiny{$\pm$0.135} \\
+\midrule
+Constraint & Lagrangian, adaptive $\lambda$ (ours) & 18.2\tiny{$\pm$0.7} & 152\tiny{$\pm$14} & 0.054\tiny{$\pm$0.019} \\
+ & fixed $\lambda{=}0.025$ & 17.1\tiny{$\pm$0.3} & 182\tiny{$\pm$17} & 0.083\tiny{$\pm$0.013} \\
+ & fixed $\lambda{=}0.25$ & 19.0\tiny{$\pm$0.5} & 155\tiny{$\pm$11} & 0.057\tiny{$\pm$0.007} \\
+ & fixed $\lambda{=}2.5$ & 32.0\tiny{$\pm$8.3} & 176\tiny{$\pm$18} & 0.049\tiny{$\pm$0.017} \\
+ & structural max-red $R{=}90$ & 21.4\tiny{$\pm$1.5} & 134\tiny{$\pm$13} & 0.045\tiny{$\pm$0.019} \\
+ & structural max-red $R{=}60$ & 149.2\tiny{$\pm$100.3} & 489\tiny{$\pm$292} & 0.007\tiny{$\pm$0.003} \\
+\bottomrule
+\end{tabular}

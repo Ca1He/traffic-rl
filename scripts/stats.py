@@ -130,6 +130,45 @@ def grid_table():
     print("wrote results/tables/grid_table.tex")
 
 
+ABLATION = [  # (group, method key, label)
+    ("Reward", "PPO [main]", r"waiting-time decrease (default)"),
+    ("Reward", "PPO [reward-queue]", r"$-$queue length"),
+    ("Reward", "PPO [reward-pressure]", r"$-$pressure"),
+    ("Shaping", "PPO [reward-fair-shaped]", r"fair-shaped, $\alpha{=}1$"),
+    ("Shaping", "PPO [fairshaped-a5]", r"fair-shaped, $\alpha{=}5$"),
+    ("Shaping", "PPO [fairshaped-a20]", r"fair-shaped, $\alpha{=}20$"),
+    ("Constraint", "PPO [lag-T90]", r"Lagrangian, adaptive $\lambda$ (ours)"),
+    ("Constraint", "PPO [fixedlam-0.025]", r"fixed $\lambda{=}0.025$"),
+    ("Constraint", "PPO [fixedlam-0.25]", r"fixed $\lambda{=}0.25$"),
+    ("Constraint", "PPO [fixedlam-2.5]", r"fixed $\lambda{=}2.5$"),
+    ("Constraint", "PPO [struct-R90]", r"structural max-red $R{=}90$"),
+    ("Constraint", "PPO [struct-R60]", r"structural max-red $R{=}60$"),
+]
+
+
+def ablation_table(df):
+    """Table 2: reward / shaping / constraint ablations on asym (all PPO, violation at T = 90 s)."""
+    d = df[df.scenario == "asym"]
+    cols = [("mean_delay", "{:.1f}"), ("max_delay", "{:.0f}"), ("mean_cost", "{:.3f}")]
+    nl = r" \\"
+    lines = [r"\begin{tabular}{llccc}", r"\toprule",
+             r" & Variant & Mean delay (s) & Max delay (s) & Viol. rate" + nl, r"\midrule"]
+    last = None
+    for group, key, label in ABLATION:
+        g = d[d.method == key]
+        if g.empty:
+            continue
+        if last is not None and group != last:
+            lines.append(r"\midrule")
+        cells = [fmt.format(g[c].mean()) + r"\tiny{$\pm$" + fmt.format(g[c].std()) + "}" for c, fmt in cols]
+        lines.append(f"{group if group != last else ''} & {label} & " + " & ".join(cells) + nl)
+        last = group
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    with open(os.path.join(TAB, "ablation_table.tex"), "w", encoding="utf-8") as fh:
+        fh.write("\n".join(lines))
+    print("wrote results/tables/ablation_table.tex")
+
+
 def main():
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
@@ -143,6 +182,7 @@ def main():
         fh.write(main_table(df))
     print("wrote results/tables/main_table.tex")
     grid_table()
+    ablation_table(df)
 
 
 if __name__ == "__main__":

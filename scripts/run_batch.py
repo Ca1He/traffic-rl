@@ -115,6 +115,21 @@ def batch_step8():
     return jobs
 
 
+def batch_step7feas():
+    """DR restricted to the feasible operating region (flow ratio Y <= 0.85), 800k steps.
+    At Y > 1 no controller can meet the wait constraint; such samples drove lambda up without bound."""
+    jobs = []
+    feas = ["random_pool.max_Y=0.85"]
+    for s in SEEDS5:
+        jobs.append(job("ppo", "random", s, "drfeas-lag", steps=800_000,
+                        sets=feas + ["sensing.dropout_p_max=0.3", "lagrangian.enabled=true"]))
+        jobs.append(job("ppo", "random", s, "drfeas-lag-demandonly", steps=800_000,
+                        sets=feas + ["lagrangian.enabled=true"]))
+    for s in SEEDS3:
+        jobs.append(job("ppo", "random", s, "drfeas-ppo", steps=800_000, sets=feas + ["sensing.dropout_p_max=0.3"]))
+    return jobs
+
+
 def batch_step8long():
     """Grid with 1.5M steps (375k per intersection): at 600k the multiplier was still rising."""
     jobs = []
@@ -137,7 +152,7 @@ def batch_step8local():
     return jobs
 
 
-BATCHES = {"step8local": batch_step8local, "step8long": batch_step8long, "step5": batch_step5, "step6": batch_step6, "step7": batch_step7, "step7long": batch_step7long, "step8": batch_step8}
+BATCHES = {"step7feas": batch_step7feas, "step8local": batch_step8local, "step8long": batch_step8long, "step5": batch_step5, "step6": batch_step6, "step7": batch_step7, "step7long": batch_step7long, "step8": batch_step8}
 
 
 def run(name, tag, cmd):
@@ -165,6 +180,7 @@ def main():
     for name in SCENARIOS:
         route_file(name)
     random_route_pool()
+    random_route_pool(n=50, low=100, high=850, seed=12345, max_Y=0.85)
     print(f"{len(jobs)} jobs, {args.workers} workers", flush=True)
     if args.dry_run:
         for _, _, cmd in jobs:

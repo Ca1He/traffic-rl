@@ -115,19 +115,39 @@ def route_file(scenario: str) -> str:
     return path
 
 
+SAT_THROUGH, SAT_LEFT = 1630.0, 1120.0  # measured saturation flows (scripts/measure_saturation.py)
+
+
+def flow_ratio(vph: Dict[str, float]) -> float:
+    """Webster's critical flow ratio Y of a demand level (Y >= 1: oversaturated, no controller can cope)."""
+    tr, lt = TURN_RATIOS["through"] + TURN_RATIOS["right"], TURN_RATIOS["left"]
+    ns, ew = max(vph["N"], vph["S"]), max(vph["E"], vph["W"])
+    return ns * tr / SAT_THROUGH + ns * lt / SAT_LEFT + ew * tr / SAT_THROUGH + ew * lt / SAT_LEFT
+
+
 def random_route_pool(n: int = 50, low: float = 150, high: float = 900, seed: int = 12345,
-                      num_seconds: int = 3600) -> List[str]:
+                      num_seconds: int = 3600, max_Y: float = None) -> List[str]:
     """Pool of route files with per-approach demand ~ U[low, high] veh/h (for domain randomization).
 
     Half of the files also contain a mid-episode demand change, so the randomized
     training distribution covers non-stationary traffic as well.
+    ``max_Y``: rejection-sample each demand level until its flow ratio Y <= max_Y, i.e. randomize
+    only over the *feasible* operating region (an oversaturated demand makes any wait constraint
+    unsatisfiable and drives the Lagrange multiplier up without bound).
     """
     rng = np.random.default_rng(seed)
     out_dir = os.path.join(NET_DIR, "random")
     paths = []
+
+    def draw():
+        while True:
+            vph = {a: float(rng.uniform(low, high)) for a in APPROACHES}
+            if max_Y is None or flow_ratio(vph) <= max_Y:
+                return vph
+
+    tag = f"rand_{seed}" + (f"_Y{max_Y}" if max_Y is not None else "")
     for i in range(n):
-        path = os.path.join(out_dir, f"rand_{seed}_{i:03d}.rou.xml")
-        draw = lambda: {a: float(rng.uniform(low, high)) for a in APPROACHES}  # noqa: E731
+        path = os.path.join(out_dir, f"{tag}_{i:03d}.rou.xml")
         if i % 2 == 0:
             periods = [Period(0, num_seconds, draw())]
         else:

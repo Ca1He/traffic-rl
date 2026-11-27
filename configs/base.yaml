@@ -38,3 +38,4 @@ random_pool:
   low: 100
   high: 850
   seed: 12345
+  max_Y: null            # keep only feasible demand levels (flow ratio Y <= max_Y)

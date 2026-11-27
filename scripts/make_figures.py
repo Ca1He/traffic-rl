@@ -30,8 +30,8 @@ STYLE = {  # method -> (color, marker, label)
     "Webster": ("#eda100", "D", "Webster"),
     "PPO": ("#2a78d6", "o", "PPO"),
     "Lag-PPO": ("#eb6834", "^", "Lagrangian PPO (ours)"),
-    "DR-Lag-PPO": ("#e87ba4", "v", "DR + Lagrangian PPO (ours)"),
-    "DR-PPO": ("#008300", "P", "DR + PPO"),
+    "DR-Lag-PPO": ("#e87ba4", "v", "DR (demand) + Lagrangian PPO"),
+    "DR-Lag-PPO-sens": ("#008300", "P", "DR (demand + sensors) + Lag. PPO"),
 }
 INK, MUTED, GRID = "#0b0b0b", "#52514e", "#e4e3df"
 
@@ -187,7 +187,8 @@ def fig_robustness():
         return
     df = pd.read_csv(path)
     name = {"Max-Pressure": "Max-Pressure", "Webster": "Webster", "PPO [main]": "PPO",
-            "PPO [lag-T90]": "Lag-PPO", "PPO [dr-lag]": "DR-Lag-PPO", "PPO [dr-ppo]": "DR-PPO"}
+            "PPO [lag-T90]": "Lag-PPO", "PPO [drfeas-lag-demandonly]": "DR-Lag-PPO",
+            "PPO [drfeas-lag]": "DR-Lag-PPO-sens"}
     df["key"] = df["method"].map(name)
     df = df[df["key"].notna()]
     ps = {"clean": 0.0, "drop0.1": 0.1, "drop0.2": 0.2, "drop0.3": 0.3}
@@ -197,7 +198,7 @@ def fig_robustness():
     for ax, scen, title in zip(axes, ("asym", "surge"), ("Training demand (asym)", "Demand shift (surge)")):
         d = df[df["scenario"] == scen]
         per_run = d.groupby(["key", "run", "p"])["mean_cost"].mean().reset_index()
-        for key in ("Max-Pressure", "Webster", "PPO", "Lag-PPO", "DR-PPO", "DR-Lag-PPO"):
+        for key in ("Max-Pressure", "Webster", "PPO", "Lag-PPO", "DR-Lag-PPO", "DR-Lag-PPO-sens"):
             g = per_run[per_run["key"] == key].groupby("p")["mean_cost"]
             if g.ngroups == 0:
                 continue

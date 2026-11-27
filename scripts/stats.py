@@ -24,9 +24,11 @@ COMPARISONS = [  # (scenario, method A, method B, metric)
     ("asym", "PPO [lag-T90]", "PPO [fairshaped-a5]", "mean_cost"),
     ("asym", "PPO [lag-T90]", "PPO [struct-R90]", "mean_delay"),
     ("surge", "PPO [lag-T90]", "PPO [main]", "mean_cost"),
-    ("surge", "PPO [dr800-lag]", "PPO [lag-T90]", "mean_cost"),
-    ("surge", "PPO [dr800-lag]", "PPO [lag-T90]", "max_delay"),
-    ("asym", "PPO [dr800-lag]", "PPO [lag-T90]", "mean_cost"),
+    ("surge", "PPO [drfeas-lag-demandonly]", "PPO [lag-T90]", "mean_cost"),
+    ("surge", "PPO [drfeas-lag-demandonly]", "PPO [lag-T90]", "max_delay"),
+    ("surge", "PPO [drfeas-lag-demandonly]", "PPO [main]", "mean_cost"),
+    ("asym", "PPO [drfeas-lag-demandonly]", "PPO [lag-T90]", "mean_cost"),
+    ("surge", "PPO [drfeas-lag]", "PPO [drfeas-lag-demandonly]", "mean_cost"),
 ]
 
 MAIN_ROWS = [  # (method key in all_runs.csv, label in the table)
@@ -38,7 +40,7 @@ MAIN_ROWS = [  # (method key in all_runs.csv, label in the table)
     ("PPO [fairshaped-a5]", "PPO + reward shaping ($\\alpha{=}5$)"),
     ("PPO [struct-R90]", "PPO + structural constr. ($R{=}90$)"),
     ("PPO [lag-T90]", "Lagrangian PPO (ours)"),
-    ("PPO [dr800-lag]", "DR + Lagrangian PPO (ours)"),
+    ("PPO [drfeas-lag-demandonly]", "DR + Lagrangian PPO (ours)"),
 ]
 COLS = [("mean_delay", "Mean delay (s)", "min", "{:.1f}"), ("max_delay", "Max delay (s)", "min", "{:.0f}"),
         ("jain_approach", "Jain", "max", "{:.2f}"), ("mean_cost", "Viol. rate", "min", "{:.3f}")]

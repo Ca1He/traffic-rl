@@ -49,7 +49,10 @@ Lagrangian PPO. On a single intersection it meets the target violation rate
 22\% at a cost of 1.7\,s mean delay, whereas reward shaping and structural (max-red)
 constraints are either ineffective or highly sensitive to their tuning.
 We then ask whether the guarantee \emph{survives distribution shift}: under a demand surge the
-violation rate of every method, including ours, rises to 23--51\%. %TODO DR sentence
+violation rate of every method, including ours, rises to 23--51\%, and detector failures
+degrade it further. Domain randomization over the feasible demand region reduces the
+violation rate under shift by 40\% ($p=0.02$), but an expected constraint over a training
+distribution does not hold on every scenario, pointing to robust constraints as the open problem.
 Code and all results: \url{https://github.com/Ca1He/traffic-rl}.
 \end{abstract}
 
@@ -259,15 +262,35 @@ Fig.~\ref{fig:tradeoff} summarizes the trade-off.
 Max-Pressure 44\%, PPO 28\% and Lagrangian PPO 23\%---no longer significantly better than PPO
 ($p=0.16$). A constraint satisfied in training gives no guarantee after a shift.
 
-\textbf{Detector dropout.} %TODO fill from results/robustness.csv and Fig. 4
-\textbf{Domain randomization.} %TODO fill from drfeas-* runs; mention: unfiltered DR did not converge
+\textbf{Detector faults.} Sensor faults erode the constraint as well (Fig.~\ref{fig:robust}).
+On the training demand the violation rate of Lagrangian PPO rises from 4.5\% to 9.9\% when each
+detector fails with $p=0.3$ at every step, to 16\% under Gaussian noise ($\sigma=0.1$) and to
+21\% when 20\% of the detectors fail for the whole episode---the hardest condition for every
+method. Interestingly, Max-Pressure becomes \emph{less} unfair under dropout (36\%$\to$28\%):
+missing readings break its persistent preference for the main road.
+
+\textbf{Domain randomization.} Training over random demands (per-approach rates
+$U[100,850]$, half with a change point) without filtering did not converge: 12\% of the draws
+are oversaturated, no policy can meet the constraint there, and $\lambda$ grew linearly
+(to 2.8 after 800k steps) while the mean delay rose to 26\,s. Restricting the draws to the
+feasible region ($Y\le0.85$) fixes this ($\lambda\approx0.3$--$0.8$, training violation rate
+4--11\%). The resulting policy is far more robust: on the unseen surge its violation rate is
+14.0\% vs.\ 23.4\% for Lagrangian PPO ($p=0.02$) and 28.4\% for PPO ($p<0.001$), its max delay
+drops from 271\,s to 203\,s ($p=0.04$), and it stays below every non-DR method under all
+dropout levels. Also randomizing the detectors brings no further gain ($p=0.25$).
+The price is that on asym itself it violates in 12.7\% of steps instead of 5.4\%.
+This exposes a structural limit: the Lagrangian enforces the violation rate \emph{in
+expectation over the training distribution}, so light scenarios end up far below $d$ and
+heavy ones above it. Neither training regime yields a per-scenario guarantee; that requires
+a worst-case or distributionally robust constraint.
 
 \begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{figures/fig4_robustness.pdf}
 \caption{Violation rate under detector dropout on the training demand (left) and on the unseen
-surge demand (right). Dashed: target $d=0.05$. %TODO update caption with the DR finding
-}
+surge demand (right); mean $\pm$ std over training seeds, 3 episodes each. Dashed: target $d=0.05$.
+Only Webster (tuned to asym, sensor-free) meets the target in training and it fails worst under shift;
+domain randomization (DR) gives the lowest violation rate under shift at every dropout level.}
 \label{fig:robust}
 \end{figure*}
 
@@ -295,8 +318,9 @@ Minimizing average delay starves low-demand approaches, provably in a fluid mode
 visibly in simulation. An explicit max-wait constraint solved with Lagrangian PPO enforces a
 chosen violation rate at a small efficiency cost and without the tuning fragility of reward
 shaping or structural rules. However, the guarantee does not transfer: under a demand surge
-all methods, including the constrained one, violate the target several-fold.
-%TODO DR conclusion.
+all methods, including the constrained one, violate the target several-fold, and detector
+faults make it worse. Domain randomization restricted to feasible demand cuts the violation
+under shift by 40\%, but an expectation constraint cannot give per-scenario guarantees.
 \textbf{Limitations.} One simulator, a single intersection and a 2$\times$2 grid, synthetic
 demand, random rather than adversarial sensor faults \cite{ZhangCXLLBH20}, and a constraint on
 the expected violation rate rather than a hard per-episode bound. Future work: robust or
@@ -317,7 +341,30 @@ Proposition~\ref{prop:starve}, and wrote the report.
 \appendix
 \onecolumn
 \section{Supplementary material}
-\textbf{Full proof of Proposition~\ref{prop:starve}.} %TODO paste from docs/proposition.md
+\textbf{Full proof of Proposition~\ref{prop:starve}.}
+\emph{Model.} Two approaches with deterministic fluid arrivals $\lambda_1$ (main) and
+$\lambda_2\ll\lambda_1$ (side), saturation flow $\mu$, $\rho=\lambda_1/\mu<1$, lost time $L$
+per switch. Policy class $\Pi_T$: serve the main road by default; every $T$ seconds make an
+excursion that clears the side-road queue and switches back. For small $\lambda_2$ the
+excursion lasts $\tau\approx2L$ (the side-road service time $\lambda_2T/\mu$ is negligible).
+\emph{Main-road delay.} During an excursion the main-road queue grows to $\lambda_1\tau$ and
+then drains at rate $\mu-\lambda_1$; the area of this triangle is
+$K=\tfrac12\lambda_1\tau\cdot\tau\mu/(\mu-\lambda_1)=\lambda_1\tau^2/(2(1-\rho))=2\lambda_1L^2/(1-\rho)$.
+\emph{Side-road delay.} Side vehicles arrive uniformly over the cycle and wait until the next
+excursion: total delay $\lambda_2T^2/2$ per cycle, and the vehicle arriving just after an
+excursion waits $\approx T$, so the maximum side wait is $W_2=T$.
+\emph{(a)} The delay rate $J(T)=K/T+\lambda_2T/2$ is convex on $T>0$; $J'(T)=-K/T^2+\lambda_2/2=0$
+gives $T^*=\sqrt{2K/\lambda_2}=2L\sqrt{\lambda_1/((1-\rho)\lambda_2)}$, which diverges as
+$\lambda_2/\lambda_1\to0$ or $\rho\to1$. At $T^*$ both terms are equal, $J(T^*)=\sqrt{2K\lambda_2}$,
+and the mean delay per vehicle $J(T^*)/(\lambda_1+\lambda_2)\to0$ as $\lambda_2\to0$.
+\emph{(b)} For $T_{\max}<T^*$, convexity puts the constrained minimizer at $T_{\max}$, and
+$J(T_{\max})-J(T^*)=K/T_{\max}+\lambda_2T_{\max}/2-\sqrt{2K\lambda_2}$. Since
+$\lambda_2T_{\max}/2<\lambda_2T^*/2=\sqrt{2K\lambda_2}/2$, the last two terms sum to a negative
+number, so the increase is at most $K/T_{\max}$; per vehicle,
+$K/(T_{\max}(\lambda_1+\lambda_2))\le2L^2/((1-\rho)T_{\max})$. $\square$
+\emph{Numbers for asym:} $L\approx5$\,s, $\rho\approx0.39$, $T^*\approx26$\,s and a price-of-fairness
+bound of $0.9$\,s/veh for $T_{\max}=90$\,s. The fluid model ignores min-green, stochastic
+arrivals and left-turn phases, so it predicts scaling, not absolute waits.
 \textbf{Hyperparameters.} PPO: lr $3\cdot10^{-4}$, 720 steps per rollout, batch 180, 10 epochs,
 $\gamma=0.99$, GAE $\lambda=0.95$, clip 0.2, entropy 0.01, MLP $[64,64]$.
 DQN: lr $10^{-3}$, buffer 50k, batch 64, target update 500, $\epsilon$: 1$\to$0.02 over 20\%.

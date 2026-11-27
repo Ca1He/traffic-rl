@@ -15,6 +15,8 @@ out = os.path.join(ROOT, "report_bundle.zip")
 with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
     z.write(os.path.join(ROOT, "report", "main.tex"), "main.tex")
     z.write(os.path.join(ROOT, "report", "references.bib"), "references.bib")
+    for f in glob.glob(os.path.join(ROOT, "report", "style", "*")):
+        z.write(f, os.path.basename(f))
     for f in glob.glob(os.path.join(ROOT, "figures", "*.pdf")):
         z.write(f, f"figures/{os.path.basename(f)}")
     for f in glob.glob(os.path.join(ROOT, "results", "tables", "*.tex")):

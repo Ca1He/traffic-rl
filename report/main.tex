@@ -44,54 +44,52 @@ Columbia University, Fall 2026.}}
 %===============================================================================
 \begin{abstract}
 Reinforcement learning (RL) traffic signal controllers are trained to minimize \emph{average}
-delay, and so are classical throughput-optimal rules such as Max-Pressure.
-We show, analytically and in simulation, that this objective can starve low-demand approaches:
-in a simple fluid model the average-delay-optimal policy makes the side-road maximum wait
-grow as $\lambda_2^{-1/2}$ while the mean delay goes to zero, and in SUMO Max-Pressure leaves
-side-road vehicles waiting up to 378\,s although its mean delay is only 15.5\,s.
-We cast fairness as an explicit constraint on the maximum waiting time and solve it with
-Lagrangian PPO. On a single intersection it meets the target violation rate
-(5.4\% vs.\ a 5\% target, down from 11.3\% for PPO, $p<0.001$) and cuts the maximum delay by
-22\% at a cost of 1.7\,s mean delay, whereas reward shaping and structural (max-red)
-constraints are either ineffective or highly sensitive to their tuning.
-We then ask whether the guarantee \emph{survives distribution shift}: under a demand surge the
-violation rate of every method, including ours, rises to 23--51\%, and detector failures
-degrade it further. Domain randomization over the feasible demand region reduces the
-violation rate under shift by 40\% ($p=0.02$), but an expected constraint over a training
-distribution does not hold on every scenario, pointing to robust constraints as the open problem.
-Code and all results: \url{https://github.com/Ca1He/traffic-rl}.
+delay, as are throughput-optimal rules such as Max-Pressure. We show that this objective can
+starve low-demand approaches: in a fluid model the average-delay-optimal policy lets the
+side-road maximum wait grow as $\lambda_2^{-1/2}$ while the mean delay vanishes, and in SUMO
+Max-Pressure keeps side-road vehicles waiting up to 378\,s at a mean delay of only 15.5\,s.
+We impose fairness as an explicit constraint on the maximum waiting time and solve it with
+Lagrangian PPO. On a single intersection the constrained policy meets the target (5.4\% of
+decision steps in violation vs.\ a 5\% target and 11.3\% for PPO, $p<0.001$) and lowers the
+maximum delay by 22\% for 1.7\,s of extra mean delay, whereas reward shaping and structural
+max-red rules are either ineffective or fragile to tune. We then test whether the constraint
+\emph{survives distribution shift}. Under an unseen demand surge every method violates the
+target in 23--51\% of steps, and detector failures make this worse. Domain randomization over
+the feasible demand region reduces the violation rate under shift by 40\% ($p=0.02$), but an
+expected constraint over a training distribution still gives no per-scenario guarantee.
+Code and results: \url{https://github.com/Ca1He/traffic-rl}.
 \end{abstract}
 
 %===============================================================================
 \section{Introduction}
-Signalized intersections are a textbook sequential decision problem, and deep RL controllers
-now routinely outperform fixed-time plans in simulation
+Signalized intersections are a classic sequential decision problem, and deep RL controllers
+outperform fixed-time plans in simulation
 \cite{WeiZYL18,WeiCZWGXL19,WeiXZZZCZZXL19,ZhengXZFWZLXL19}. Almost all of them optimize an
-\emph{average} efficiency signal---cumulative waiting time, queue length or pressure.
-Averages hide distributions: a controller can keep the main road flowing and the mean delay
-low while a handful of side-road drivers wait for minutes (Fig.~\ref{fig:teaser}).
-Such starvation is not only unfair; drivers who wait too long run red lights, and
-practitioners impose maximum-red rules for exactly this reason.
+\emph{average} efficiency signal such as cumulative waiting time, queue length or pressure.
+An average can hide a long tail: a controller may keep the main road flowing and the mean
+delay low while a few side-road drivers wait for minutes (Fig.~\ref{fig:teaser}).
+Maximum-red limits in conventional signal timing exist to prevent exactly this.
 
 Fairness in RL signal control has been addressed by reshaping the reward
 \cite{RaeisL21,YanZBB20,YeDWZWC23}, by multi-objective welfare functions \cite{SiddiqueWZ20},
 and recently by constraints \cite{HaydariAZC25,SatheeshP25}. Separately, RL controllers are
 known to be brittle to sensor failures and demand changes \cite{RodriguesA19,TanSS20,AultS21,MeiLSW23}.
-These two lines have not met: a fairness guarantee obtained in training is only useful if it
-still holds when the traffic or the sensors change, and \emph{no prior work evaluates this}.
+The two questions are rarely studied together, yet a fairness guarantee obtained in training
+is only useful if it still holds when traffic or sensors change. We are not aware of work
+that evaluates this.
 
 \textbf{Contributions.}
-(1) A simple fluid-model proposition showing that average-delay-optimal control starves
-low-demand approaches, with the maximum wait scaling as $\lambda_2^{-1/2}$, while the price of
-a max-wait constraint is bounded independently of $\lambda_2$; we confirm the predicted trend
-in SUMO (Sec.~\ref{sec:prop}).
-(2) An outcome constraint on the maximum waiting time solved with Lagrangian PPO, compared
-under one protocol with reward-shaping and structural (max-red) fairness, on a single
-intersection and a 2$\times$2 grid, where we show that the constraint must use the
-\emph{local} wait each signal can control (Sec.~\ref{sec:method}, \ref{sec:exp}).
-(3) The first evaluation of whether fairness constraints survive demand shift and detector
-dropout, and of domain randomization over the \emph{feasible} operating region as a remedy
-(Sec.~\ref{sec:robust}).
+(1) A fluid-model proposition showing that average-delay-optimal control starves low-demand
+approaches, with the maximum wait scaling as $\lambda_2^{-1/2}$, while the price of a max-wait
+constraint is bounded independently of $\lambda_2$; the predicted trend appears in SUMO
+(Sec.~\ref{sec:prop}).
+(2) An outcome constraint on the maximum waiting time, solved with Lagrangian PPO and compared
+under one protocol with reward-shaping and structural (max-red) fairness on a single
+intersection and a 2$\times$2 grid. In a network the constraint must use the \emph{local}
+wait each signal can control (Sec.~\ref{sec:method}, \ref{sec:exp}).
+(3) An evaluation of whether these fairness guarantees survive demand shift and detector
+faults, and of domain randomization restricted to the \emph{feasible} operating region as a
+remedy (Sec.~\ref{sec:robust}).
 
 %===============================================================================
 \section{Background and Related Work}
@@ -121,7 +119,7 @@ surges, incidents, sensor noise and missing data was studied by
 \cite{RodriguesA19,TanSS20,MeiLSW23,ShiDLC23}, without fairness.
 \textbf{Our difference:} we constrain the \emph{outcome} (max wait) rather than the signal
 program, compare it head-to-head with shaping and structural constraints, and test whether
-the constraint---not just efficiency---survives distribution shift.
+the constraint itself, not only efficiency, survives distribution shift.
 %TODO read FAirLight full text (DOI 10.1145/3676169) and sharpen this sentence if needed.
 
 %===============================================================================
@@ -179,7 +177,7 @@ $K=\lambda_1\tau^2/(2(1-\rho))=2\lambda_1L^2/(1-\rho)$; side-road vehicles wait 
 contributing $\lambda_2T^2/2$. The total delay rate is $J(T)=K/T+\lambda_2T/2$.
 
 \begin{proposition}\label{prop:starve}
-(a) The average-delay-optimal period is
+(a) Within this policy class, the average-delay-optimal period is
 $T^*=2L\sqrt{\lambda_1/((1-\rho)\lambda_2)}$, so the maximum side-road wait $W_2^*=T^*$
 diverges as $\lambda_2/\lambda_1\to0$ or $\rho\to1$, while the mean delay per vehicle
 $\sqrt{2K\lambda_2}/(\lambda_1+\lambda_2)\to0$.
@@ -191,8 +189,8 @@ optimum is $T_{\max}$ and $J(T_{\max})-J(T^*)\le K/T_{\max}$; divide by $\lambda
 Full proof in the supplement. The result formalizes a classical observation about priority
 service \cite{Kleinrock76}; we present it as an illustration, not a new theorem.
 
-Fig.~\ref{fig:prop} sweeps the side-road demand in SUMO with the main road fixed at
-800\,veh/h. Max-Pressure, which is efficiency-oriented, lets the side-road maximum wait grow
+Fig.~\ref{fig:prop} (supplement) sweeps the side-road demand in SUMO with the main road fixed
+at 800\,veh/h. Max-Pressure, which is efficiency-oriented, lets the side-road maximum wait grow
 from 281\,s to 747\,s as the side demand falls from 400 to 25\,veh/h, while its mean delay
 \emph{improves} from 23.7\,s to 10.6\,s (log--log slope $-0.36$ vs.\ $-0.5$ predicted; the
 fluid model ignores stochastic arrivals and min-green). Webster, which splits green by
@@ -206,18 +204,20 @@ arrivals (60/20/20\% through/left/right). Demands: \emph{balanced} (500\,veh/h p
 \emph{asym} (main 800, side 200) and \emph{surge} (asym, then a 20-min side-road surge to
 700 with the main road at 500, then asym). Saturation flows for Webster were measured in
 SUMO (1630 / 1120\,veh/h for through / left lanes). PPO and DQN come from Stable-Baselines3
-\cite{RaffinHGKED21} (hyperparameters in the supplement); RL methods are trained for 300k
-steps with 5 seeds (3 for ablations). Every metric uses \emph{all} vehicles---including
-those still in the network or not yet inserted at the end of the episode---since dropping
-them would hide exactly the starved vehicles. We report mean $\pm$ std over training seeds
-of 5 evaluation episodes each, and Welch's $t$-test \cite{HendersonIBPPM18}. All runs take
-about 6 CPU-hours on a laptop.
+\cite{RaffinHGKED21} (hyperparameters in the supplement). Single-intersection policies are
+trained for 300k steps (800k with domain randomization) with 5 seeds, 3 for ablations.
+Every metric counts \emph{all} vehicles, including those still in the network or not yet
+inserted at the end of the episode, since dropping them would hide exactly the starved
+vehicles. We report mean $\pm$ std over training seeds, each evaluated on 5 held-out
+episodes, and Welch's $t$-test \cite{HendersonIBPPM18}. All experiments together take about
+5 hours on a 16-thread laptop CPU.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{figures/fig1_teaser.pdf}
-\caption{Share of side-road vehicles that waited longer than $x$ (asym, 3 episodes, log scale).
-Max-Pressure has the lowest mean delay but a long tail; Lagrangian PPO cuts the tail near $T=90$\,s.}
+\caption{Share of side-road vehicles that waited longer than $x$ (asym, 3 evaluation episodes,
+one training seed, log scale). Max-Pressure has the lowest mean delay but a long tail;
+Lagrangian PPO cuts the tail near $T=90$\,s.}
 \label{fig:teaser}
 \end{figure}
 
@@ -225,7 +225,8 @@ Max-Pressure has the lowest mean delay but a long tail; Lagrangian PPO cuts the 
 \centering
 \caption{Single intersection. Mean $\pm$ std over 5 training seeds (RL) or 5 evaluation episodes
 (baselines). Violation rate: share of decision steps with a vehicle waiting $>90$\,s (target 0.05).
-All RL policies were trained on asym only; surge is unseen. Best value per column in bold.}
+RL policies are trained on asym (DR: on randomized demand) and never see surge. Webster is re-timed
+for each scenario's average demand, an advantage the RL policies do not have. Best value per column in bold.}
 \label{tab:main}
 \resizebox{\textwidth}{!}{\input{tables/main_table.tex}}
 \end{table*}
@@ -235,26 +236,29 @@ All RL policies were trained on asym only; surge is unseen. Best value per colum
 \includegraphics[width=\textwidth]{figures/fig4_robustness.pdf}
 \caption{Violation rate under detector dropout on the training demand (left) and on the unseen
 surge demand (right); mean $\pm$ std over training seeds, 3 episodes each. Dashed: target $d=0.05$.
-Only Webster (tuned to asym, sensor-free) meets the target in training and it fails worst under shift;
-domain randomization (DR) gives the lowest violation rate under shift at every dropout level.}
+Webster is timed for asym here (like the RL policies, it does not know the surge) and uses no
+detectors: it meets the target in training and fails worst under shift. Domain randomization (DR)
+gives the lowest violation rate under shift at every dropout level.}
 \label{fig:robust}
 \end{figure*}
 
-\textbf{Average-optimal control is unfair.} (Tab.~\ref{tab:main}) On asym, Max-Pressure has the
+\textbf{Average-optimal control is unfair.} On asym (Tab.~\ref{tab:main}), Max-Pressure has the
 lowest mean delay (15.5\,s) but the worst max delay among adaptive methods (378\,s) and a
 36\% violation rate. Queue and pressure rewards make RL starve the side road completely
 (violation rate 0.93 / 0.97, max delay $>$1000\,s; Tab.~\ref{tab:ablation}); the
-waiting-time reward is better but still violates in 11\% of steps.
+waiting-time reward is better but still violates in 11\% of steps. DQN is less stable than
+PPO: one of its five seeds collapsed late in training, hence its large variance.
 
 \textbf{The constraint is met precisely and cheaply.} Lagrangian PPO reaches a 5.4\% violation
 rate (target 5\%; PPO 11.3\%, $p=0.0009$), reduces the max delay from 194\,s to 152\,s
-($p=0.006$) and raises the mean delay by 1.7\,s. Fig.~\ref{fig:training} shows $\lambda$
-settling near 0.19. Reward shaping \cite{RaeisL21} is hard to tune: $\alpha=5$ still violates
-in 14\% of steps and $\alpha=20$ destabilizes training (79\%). A fixed penalty works only near
-the $\lambda$ that the dual update finds automatically; ten times larger doubles the mean delay.
-A structural max-red constraint with $R=90$\,s performs comparably on max delay but costs
-3.3\,s more mean delay ($p=0.05$), and $R=60$\,s makes the controller collapse (mean delay 149\,s).
-Fig.~\ref{fig:tradeoff} summarizes the trade-off.
+($p=0.006$) and raises the mean delay by 1.7\,s; $\lambda$ settles near 0.19
+(Fig.~\ref{fig:training}, supplement). Reward shaping \cite{RaeisL21} is hard to tune:
+$\alpha=5$ still violates in 14\% of steps and $\alpha=20$ destabilizes training (79\%).
+A fixed penalty works only near the $\lambda$ that the dual update finds by itself; ten times
+that value raises the mean delay from 19\,s to 32\,s. A structural max-red rule with
+$R=90$\,s reaches a lower max delay (134\,s) but costs 3.3\,s more mean delay ($p\approx0.05$),
+and $R=60$\,s makes the controller collapse (mean delay 149\,s). Fig.~\ref{fig:tradeoff}
+summarizes the trade-off.
 
 \begin{figure}[t]
 \centering
@@ -273,15 +277,15 @@ Fig.~\ref{fig:tradeoff} summarizes the trade-off.
 %-------------------------------------------------------------------------------
 \subsection{Does the constraint survive distribution shift?}\label{sec:robust}
 \textbf{Demand shift.} On the unseen surge demand every method breaks the 5\% target
-(Tab.~\ref{tab:main}, right): Webster, tuned to the average demand, reaches 51\%,
-Max-Pressure 44\%, PPO 28\% and Lagrangian PPO 23\%---no longer significantly better than PPO
-($p=0.16$). A constraint satisfied in training gives no guarantee after a shift.
+(Tab.~\ref{tab:main}, right): Webster reaches 51\% even when re-timed for the surge average,
+Max-Pressure 44\%, PPO 28\% and Lagrangian PPO 23\%, which is no longer significantly better
+than PPO ($p=0.16$). A constraint satisfied in training gives no guarantee after a shift.
 
 \textbf{Detector faults.} Sensor faults erode the constraint as well (Fig.~\ref{fig:robust}).
 On the training demand the violation rate of Lagrangian PPO rises from 4.5\% to 9.9\% when each
-detector fails with $p=0.3$ at every step, to 16\% under Gaussian noise ($\sigma=0.1$) and to
-21\% when 20\% of the detectors fail for the whole episode---the hardest condition for every
-method. Interestingly, Max-Pressure becomes \emph{less} unfair under dropout (36\%$\to$28\%):
+detector fails with $p=0.3$ at every step, to 16\% under Gaussian noise ($\sigma=0.1$), and to
+21\% when 20\% of the detectors fail for the whole episode, the hardest condition for every
+method. Max-Pressure, in contrast, becomes \emph{less} unfair under dropout (36\%$\to$28\%):
 missing readings break its persistent preference for the main road.
 
 \textbf{Domain randomization.} Training over random demands (per-approach rates
@@ -289,10 +293,10 @@ $U[100,850]$, half with a change point) without filtering did not converge: 12\%
 are oversaturated, no policy can meet the constraint there, and $\lambda$ grew linearly
 (to 2.8 after 800k steps) while the mean delay rose to 26\,s. Restricting the draws to the
 feasible region ($Y\le0.85$) fixes this ($\lambda\approx0.3$--$0.8$, training violation rate
-4--11\%). The resulting policy is far more robust: on the unseen surge its violation rate is
+4--11\%). The resulting policy is much more robust: on the unseen surge its violation rate is
 14.0\% vs.\ 23.4\% for Lagrangian PPO ($p=0.02$) and 28.4\% for PPO ($p<0.001$), its max delay
-drops from 271\,s to 203\,s ($p=0.04$), and it stays below every non-DR method under all
-dropout levels. Also randomizing the detectors brings no further gain ($p=0.25$).
+drops from 271\,s to 203\,s ($p=0.04$), and on surge it stays below every non-DR method at all
+dropout levels. Randomizing the detectors as well brings no further gain ($p=0.25$).
 The price is that on asym itself it violates in 12.7\% of steps instead of 5.4\%.
 This exposes a structural limit: the Lagrangian enforces the violation rate \emph{in
 expectation over the training distribution}, so light scenarios end up far below $d$ and
@@ -312,7 +316,8 @@ because unconstrained IPPO is already fairer here; under surge both exceed the t
 
 \begin{table}[t]
 \centering
-\caption{2$\times$2 grid (local violation rate, $T=90$\,s). RL: 3 seeds.}
+\caption{2$\times$2 grid (local violation rate, $T=90$\,s). RL: mean $\pm$ std over 3 training
+seeds; baselines: mean of 3 evaluation episodes. All methods see asym in training only.}
 \label{tab:grid}
 \resizebox{\columnwidth}{!}{\input{tables/grid_table.tex}}
 \end{table}

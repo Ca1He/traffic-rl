@@ -4,7 +4,7 @@
 
 Colors follow the method (never its rank) and are identical in every figure; every series is
 also direct-labeled and has its own marker, so nothing relies on color alone.
-Palette validated with the dataviz validator (light mode, categorical, adjacent pairs).
+The categorical palette was checked for color-vision-deficiency separation (adjacent pairs).
 """
 import glob
 import os

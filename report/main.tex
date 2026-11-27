@@ -1,8 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % ELEN E6885 Final Report -- DRAFT
-% Use with Overleaf's ICML template: replace the template's example .tex with this file,
-% and upload  references.bib, figures/*.pdf, tables/*.tex  (see report/README.md).
-% Lines marked  %TODO  still need results or your decision.
+% Build locally: bash scripts/build_pdf.sh  (needs MiKTeX or TeX Live).
+% Overleaf: upload this file, references.bib, report/style/*, figures/*.pdf, tables/*.tex.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \documentclass{article}
 \usepackage{microtype}
@@ -14,8 +13,8 @@
 \usepackage{algorithm}
 \usepackage{algorithmic}
 \newcommand{\theHalgorithm}{\arabic{algorithm}}
-% Use the year of the template Overleaf gives you (icml2025 / icml2026):
-\usepackage[accepted]{icml2025}
+% ICML 2026 style files are in report/style/ (official, from media.icml.cc).
+\usepackage[accepted]{icml2026}
 \newtheorem{proposition}{Proposition}
 
 \icmltitlerunning{Do Fairness Constraints Survive Distribution Shift?}
@@ -26,10 +25,10 @@
 \icmltitle{Do Fairness Constraints Survive Distribution Shift?\\
            Constrained Reinforcement Learning for Traffic Signal Control}
 \begin{icmlauthorlist}
-\icmlauthor{Your Name}{cu}   %TODO your name
+\icmlauthor{He Cai}{cu}
 \end{icmlauthorlist}
 \icmlaffiliation{cu}{Department of Electrical Engineering, Columbia University, New York, USA}
-\icmlcorrespondingauthor{Your Name}{uni@columbia.edu}   %TODO
+\icmlcorrespondingauthor{He Cai}{hc3646@columbia.edu}
 \icmlkeywords{Reinforcement Learning, Constrained MDP, Traffic Signal Control, Fairness, Robustness}
 \vskip 0.3in
 ]
@@ -328,13 +327,13 @@ distributionally robust constraints, larger networks and real demand data.
 
 %===============================================================================
 \bibliography{references}
-\bibliographystyle{icml2025}
+\bibliographystyle{icml2026}
 
 \section*{Statement of Contributions}
-This is a single-author project. The author designed the study, implemented the environment
-wrappers, baselines, Lagrangian PPO and evaluation pipeline, ran all experiments, derived
-Proposition~\ref{prop:starve}, and wrote the report.
-%TODO Check the course policy on AI assistance and, if required, disclose it here.
+This is a single-author project (He Cai, hc3646). It comprises the study design, the
+environment wrappers (scenarios, noisy sensing, max-green enforcement, fairness cost,
+metrics), the baselines, Lagrangian PPO, the 2$\times$2 grid extension, all experiments,
+Proposition~\ref{prop:starve}, and this report.
 
 %===============================================================================
 \newpage

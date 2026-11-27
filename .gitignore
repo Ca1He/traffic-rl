@@ -9,3 +9,4 @@ tensorboard/
 .DS_Store
 runs/
 report_bundle.zip
+report/build/

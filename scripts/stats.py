@@ -94,6 +94,42 @@ def main_table(df, scenarios=("asym", "surge")):
     return "\n".join(lines)
 
 
+def grid_table():
+    """Table 3: 2x2 grid (local per-intersection violation rate)."""
+    import glob
+    rows = []
+    base = pd.read_csv(os.path.join(RES, "grid_baselines.csv"))
+    for m, g in base.groupby("method"):
+        for scen, gg in g.groupby("scenario"):
+            rows.append({"method": m, "scenario": scen, "run": "-", **gg[[c for c, *_ in COLS]].mean().to_dict()})
+    for tag, label in (("grid1500-ippo", "IPPO"), ("gridlocal-lag", "Lagrangian IPPO (ours)")):
+        for f in glob.glob(os.path.join(ROOT, "runs", tag, "ippo_asym_s*", "eval.csv")):
+            d = pd.read_csv(f)
+            for scen, gg in d.groupby("scenario"):
+                rows.append({"method": label, "scenario": scen, "run": f, **gg[[c for c, *_ in COLS]].mean().to_dict()})
+    df = pd.DataFrame(rows)
+    df.to_csv(os.path.join(RES, "grid_all.csv"), index=False)
+    order = ["Fixed-Time", "Webster", "Max-Pressure", "IPPO", "Lagrangian IPPO (ours)"]
+    nl = r" \\"
+    lines = [r"\begin{tabular}{l" + "c" * 2 * len(COLS) + "}", r"\toprule",
+             r" & \multicolumn{4}{c}{asym} & \multicolumn{4}{c}{surge}" + nl,
+             r"\cmidrule(lr){2-5} \cmidrule(lr){6-9}",
+             "Method & " + " & ".join(c[1] for _ in range(2) for c in COLS) + nl, r"\midrule"]
+    for m in order:
+        cells = []
+        for scen in ("asym", "surge"):
+            d = df[(df.method == m) & (df.scenario == scen)]
+            for col, _, _, fmt in COLS:
+                v, sd = d[col].mean(), d[col].std()
+                pm = r"\tiny{$\pm$" + fmt.format(sd) + "}" if len(d) > 1 else ""
+                cells.append(fmt.format(v) + pm)
+        lines.append(f"{m} & " + " & ".join(cells) + nl)
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    with open(os.path.join(TAB, "grid_table.tex"), "w", encoding="utf-8") as fh:
+        fh.write("\n".join(lines))
+    print("wrote results/tables/grid_table.tex")
+
+
 def main():
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
@@ -106,6 +142,7 @@ def main():
     with open(os.path.join(TAB, "main_table.tex"), "w", encoding="utf-8") as fh:
         fh.write(main_table(df))
     print("wrote results/tables/main_table.tex")
+    grid_table()
 
 
 if __name__ == "__main__":

@@ -1,0 +1,13 @@
+\begin{tabular}{lcccccccc}
+\toprule
+ & \multicolumn{4}{c}{asym} & \multicolumn{4}{c}{surge} \\
+\cmidrule(lr){2-5} \cmidrule(lr){6-9}
+Method & Mean delay (s) & Max delay (s) & Jain & Viol. rate & Mean delay (s) & Max delay (s) & Jain & Viol. rate \\
+\midrule
+Fixed-Time & 72.7 & 324 & 0.88 & 0.103 & 59.3 & 266 & 0.98 & 0.063 \\
+Webster & 48.0 & 298 & 0.87 & 0.134 & 260.1 & 1791 & 0.67 & 0.655 \\
+Max-Pressure & 29.0 & 339 & 0.89 & 0.149 & 31.6 & 313 & 0.97 & 0.172 \\
+IPPO & 28.9\tiny{$\pm$0.9} & 259\tiny{$\pm$51} & 0.95\tiny{$\pm$0.01} & 0.061\tiny{$\pm$0.024} & 33.0\tiny{$\pm$1.2} & 380\tiny{$\pm$21} & 0.98\tiny{$\pm$0.01} & 0.116\tiny{$\pm$0.013} \\
+Lagrangian IPPO (ours) & 29.5\tiny{$\pm$1.2} & 239\tiny{$\pm$5} & 0.96\tiny{$\pm$0.01} & 0.046\tiny{$\pm$0.004} & 33.5\tiny{$\pm$1.2} & 387\tiny{$\pm$103} & 0.99\tiny{$\pm$0.01} & 0.095\tiny{$\pm$0.009} \\
+\bottomrule
+\end{tabular}

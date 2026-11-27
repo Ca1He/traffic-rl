@@ -1,0 +1,19 @@
+method,scenario,run,mean_delay,max_delay,jain_approach,mean_cost
+Fixed-Time,asym,-,72.73417315896208,324.0,0.8813539326628623,0.10312499999999997
+Fixed-Time,surge,-,59.34720651623973,265.6666666666667,0.9815999605592323,0.06307870370370362
+Max-Pressure,asym,-,28.97685665952588,338.6666666666667,0.8882242628423566,0.14861111111111108
+Max-Pressure,surge,-,31.60858039258577,312.6666666666667,0.9693439214306313,0.17164351851851847
+Webster,asym,-,48.03272727231022,298.3333333333333,0.8676681977821797,0.13425925925925922
+Webster,surge,-,260.11579109630696,1791.3333333333333,0.6671314584659358,0.6550925925925926
+IPPO,asym,C:\Users\26917\Desktop\6885 Final Project\traffic-rl\runs\grid1500-ippo\ippo_asym_s0\eval.csv,29.310966275818988,255.0,0.9611018931380791,0.06365740740740737
+IPPO,surge,C:\Users\26917\Desktop\6885 Final Project\traffic-rl\runs\grid1500-ippo\ippo_asym_s0\eval.csv,33.59466510033576,367.0,0.9846176670953924,0.1237268518518518
+IPPO,asym,C:\Users\26917\Desktop\6885 Final Project\traffic-rl\runs\grid1500-ippo\ippo_asym_s1\eval.csv,27.933517862165004,311.6666666666667,0.9536979072475957,0.08402777777777774
+IPPO,surge,C:\Users\26917\Desktop\6885 Final Project\traffic-rl\runs\grid1500-ippo\ippo_asym_s1\eval.csv,31.64780878065568,369.0,0.9859640832490094,0.12384259259259252
+IPPO,asym,C:\Users\26917\Desktop\6885 Final Project\traffic-rl\runs\grid1500-ippo\ippo_asym_s2\eval.csv,29.555856919821125,210.66666666666666,0.9469962921656266,0.03587962962962957
+IPPO,surge,C:\Users\26917\Desktop\6885 Final Project\traffic-rl\runs\grid1500-ippo\ippo_asym_s2\eval.csv,33.89023092790164,405.0,0.9738086062333382,0.10057870370370366
+Lagrangian IPPO (ours),asym,C:\Users\26917\Desktop\6885 Final Project\traffic-rl\runs\gridlocal-lag\ippo_asym_s0\eval.csv,30.970597128789667,240.0,0.9667523122246019,0.043171296296296235
+Lagrangian IPPO (ours),surge,C:\Users\26917\Desktop\6885 Final Project\traffic-rl\runs\gridlocal-lag\ippo_asym_s0\eval.csv,34.788456819729014,506.3333333333333,0.9817026314513622,0.10428240740740737
+Lagrangian IPPO (ours),asym,C:\Users\26917\Desktop\6885 Final Project\traffic-rl\runs\gridlocal-lag\ippo_asym_s1\eval.csv,28.815350261052384,243.33333333333334,0.9537651470488612,0.043865740740740705
+Lagrangian IPPO (ours),surge,C:\Users\26917\Desktop\6885 Final Project\traffic-rl\runs\gridlocal-lag\ippo_asym_s1\eval.csv,32.35322700653973,332.0,0.9877396100532162,0.0946759259259259
+Lagrangian IPPO (ours),asym,C:\Users\26917\Desktop\6885 Final Project\traffic-rl\runs\gridlocal-lag\ippo_asym_s2\eval.csv,28.83259726265187,233.66666666666666,0.9547046388185062,0.04999999999999996
+Lagrangian IPPO (ours),surge,C:\Users\26917\Desktop\6885 Final Project\traffic-rl\runs\gridlocal-lag\ippo_asym_s2\eval.csv,33.3280643573218,322.6666666666667,0.9916825762322657,0.0858796296296296

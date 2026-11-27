@@ -110,14 +110,28 @@ class GridVecEnv(VecEnv):
         ts0 = self.sumo.traffic_signals[self.ts_ids[0]]
         super().__init__(len(self.ts_ids), ts0.observation_space, gym.spaces.Discrete(ts0.num_green_phases))
         self._actions = None
+        self._entry: Dict[str, Dict[str, float]] = {}  # ts -> vehicle -> accumulated wait on arrival
 
     # -- helpers ------------------------------------------------------------------
     def _stack(self, obs: dict) -> np.ndarray:
         return np.stack([obs[t] for t in self.ts_ids]).astype(np.float32)
 
     def _max_wait(self, ts) -> float:
-        waits = [ts.sumo.vehicle.getAccumulatedWaitingTime(v)
-                 for lane in ts.lanes for v in ts.sumo.lane.getLastStepVehicleIDs(lane)]
+        """Max *local* waiting time at this intersection.
+
+        SUMO's accumulated waiting time covers the whole trip, so a vehicle that already waited
+        upstream would count against the downstream intersection, which cannot control it.
+        We subtract the vehicle's accumulated wait at the moment it was first seen on this
+        intersection's incoming lanes (resolution: one decision step, 5 s).
+        """
+        entry = self._entry.setdefault(ts.id, {})
+        now, waits = {}, []
+        for lane in ts.lanes:
+            for v in ts.sumo.lane.getLastStepVehicleIDs(lane):
+                acc = ts.sumo.vehicle.getAccumulatedWaitingTime(v)
+                now[v] = entry.get(v, acc)
+                waits.append(acc - now[v])
+        self._entry[ts.id] = now  # forget vehicles that left
         return float(max(waits)) if waits else 0.0
 
     def enforce_max_green(self, actions: dict) -> dict:
@@ -131,6 +145,7 @@ class GridVecEnv(VecEnv):
     def reset(self):
         obs = self.sumo.reset(seed=self.seed_ + self.episode)
         self.episode += 1
+        self._entry = {}
         return self._stack(obs)
 
     def step_async(self, actions):
@@ -178,6 +193,7 @@ def run_grid_episode(cfg: dict, policy, seed: int) -> dict:
     venv = GridVecEnv(cfg, seed=seed)
     venv.seed_ = seed
     obs = venv.sumo.reset(seed=seed)
+    venv._entry = {}
     obs = venv._stack(obs)
     costs, done = [], False
     while not done:

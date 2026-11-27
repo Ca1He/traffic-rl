@@ -127,7 +127,17 @@ def batch_step8long():
     return jobs
 
 
-BATCHES = {"step8long": batch_step8long, "step5": batch_step5, "step6": batch_step6, "step7": batch_step7, "step7long": batch_step7long, "step8": batch_step8}
+def batch_step8local():
+    """Grid Lagrangian IPPO retrained with the per-intersection (local) waiting-time cost."""
+    jobs = []
+    for s in SEEDS3:
+        cmd = [sys.executable, "train_grid.py", "--seed", str(s), "--tag", "gridlocal-lag", "--steps", "1500000",
+               "--set", "lagrangian.enabled=true"]
+        jobs.append((f"ippo_asym_s{s}", "gridlocal-lag", cmd))
+    return jobs
+
+
+BATCHES = {"step8local": batch_step8local, "step8long": batch_step8long, "step5": batch_step5, "step6": batch_step6, "step7": batch_step7, "step7long": batch_step7long, "step8": batch_step8}
 
 
 def run(name, tag, cmd):

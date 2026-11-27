@@ -61,6 +61,7 @@ def main():
     ap.add_argument("--tag", default="grid-ippo")
     ap.add_argument("--eval-scenarios", nargs="*", default=["asym", "surge"])
     ap.add_argument("--baselines", action="store_true")
+    ap.add_argument("--eval-only", action="store_true", help="re-evaluate an existing model.zip")
     args = ap.parse_args()
     torch.set_num_threads(1)
     for s in GRID_SCENARIOS:  # pre-generate route files (parallel jobs only read them)
@@ -86,6 +87,14 @@ def main():
     hp = dict(HYPERPARAMS["ppo"], batch_size=720)  # rollout = 720 steps x 4 intersections
     with open(os.path.join(run_dir, "config.yaml"), "w", encoding="utf-8") as fh:
         yaml.safe_dump({"args": vars(args), "cfg": cfg, "hyperparams": hp}, fh)
+
+    if args.eval_only:
+        model = PPO.load(os.path.join(run_dir, "model.zip"), device="cpu")
+        policy = lambda obs, v: model.predict(obs, deterministic=True)[0]  # noqa: E731
+        df = evaluate(lambda scen: policy, cfg, args.eval_scenarios)
+        df.to_csv(os.path.join(run_dir, "eval.csv"), index=False)
+        print(df.groupby("scenario")[["mean_delay", "max_delay", "jain_approach", "mean_cost"]].mean().round(3))
+        return
 
     lag = cfg["lagrangian"]
     state = None
